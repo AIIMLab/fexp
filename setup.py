@@ -25,7 +25,7 @@ test_requirements = ['pytest>=3', ]
 setup(
     author="AIIM Lab",
     author_email='j.teuwen@nki.nl',
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
