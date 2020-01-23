@@ -10,10 +10,10 @@ LICENSE file in the root directory of this source tree.
 
 from setuptools import setup, find_packages
 
-with open('../../fexp/README.rst') as readme_file:
+with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-with open('../../fexp/HISTORY.rst') as history_file:
+with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = ['numpy']
