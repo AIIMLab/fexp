@@ -16,7 +16,7 @@ with open('../../fexp/README.rst') as readme_file:
 with open('../../fexp/HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = [ ]
+requirements = ['numpy']
 
 setup_requirements = ['pytest-runner', ]
 
