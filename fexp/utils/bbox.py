@@ -36,6 +36,9 @@ class BoundingBox(object):
 
         return BoundingBox(bbox)
 
+    def astype(self, dtype):
+        return BoundingBox(self.bbox, dtype=dtype)
+
     def __add__(self, x):
         """Adding two bounding boxes returns the encapsulating bounding box.
         """
@@ -93,8 +96,8 @@ def _combine_bbox(bbox_coords, bbox_size):
     tuple
 
     """
-    bbox_coords = np.asarray(bbox_coords).astype(int)
-    bbox_size = np.asarray(bbox_size).astype(int)
+    bbox_coords = np.asarray(bbox_coords)
+    bbox_size = np.asarray(bbox_size)
     bbox = tuple(bbox_coords.tolist() + bbox_size.tolist())
     return bbox
 
