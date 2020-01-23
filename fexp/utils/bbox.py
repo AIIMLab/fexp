@@ -11,17 +11,24 @@ class BoundingBox(object):
     """BoundingBox class
     """
     def __init__(self, bbox, dtype=np.int):
-        self.bbox = np.asarray(bbox)
+        if isinstance(bbox, BoundingBox):
+            self.bbox = bbox.bbox
+        elif isinstance(bbox, (list, tuple, np.ndarray)):
+            self.bbox = np.asarray(bbox)
+        else:
+            raise ValueError(f'BoundingBox only accepts BoundingBox, list, tuple or np.ndarrays as input.')
+
         self.dtype = dtype
         if dtype:
             self.bbox = self.bbox.astype(dtype)
 
         self.coordinates, self.size = _split_bbox(bbox)
+
         self.ndim = len(self.bbox) // 2
 
     @property
     def center(self):
-        return self.coordinates - self.size / 2
+        return self.coordinates + self.size / 2
 
     def bounding_box_around_center(self, output_size):
         output_size = np.asarray(output_size)
@@ -53,7 +60,7 @@ class BoundingBox(object):
         return BoundingBox(_combine_bbox(new_coordinates, new_size))
 
     def __len__(self, x):
-        return len(self.bbox) // 2
+        return len(self.bbox)
 
     def __getitem__(self, idx):
         return self.bbox[idx]
@@ -76,12 +83,13 @@ def _split_bbox(bbox):
     -------
     list of ndarrays
     """
-    bbox = np.asarray(bbox)
-
-    ndim = len(bbox) // 2
+    len_bbox = len(bbox)
+    if not len_bbox % 2 == 0:
+        raise ValueError(f'{bbox} needs to have a have a length which is divisible by 2.')
+    ndim = len_bbox // 2
     bbox_coords = bbox[:ndim]
     bbox_size = bbox[ndim:]
-    return bbox_coords, bbox_size
+    return np.asarray(bbox_coords), np.asarray(bbox_size)
 
 
 def _combine_bbox(bbox_coords, bbox_size):
@@ -170,5 +178,7 @@ def crop_to_bbox(image, bbox, pad_value=0):
     patch = pad_value * np.ones(bbox_size, dtype=image.dtype)
     patch_idx = [slice(i, j) for i, j
                  in zip(l_offset, bbox_size - r_offset)]
+
     patch[tuple(patch_idx)] = out
+
     return patch
