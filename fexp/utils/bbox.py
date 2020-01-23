@@ -12,8 +12,9 @@ class BoundingBox(object):
     """
     def __init__(self, bbox, dtype=np.int):
         self.bbox = np.asarray(bbox)
+        self.dtype = dtype
         if dtype:
-            self.bbox = self.bbox.astype(np.int)
+            self.bbox = self.bbox.astype(dtype)
 
         self.coordinates, self.size = _split_bbox(bbox)
         self.ndim = len(self.bbox) // 2
@@ -159,6 +160,7 @@ def crop_to_bbox(image, bbox, pad_value=0):
     region_idx = [slice(i, j) for i, j
                   in zip(bbox_coords + l_offset,
                          bbox_coords + bbox_size - r_offset)]
+
     out = image[tuple(region_idx)]
 
     if np.all(l_offset == 0) and np.all(r_offset == 0):
