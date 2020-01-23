@@ -8,8 +8,13 @@ import numpy as np
 
 
 class BoundingBox(object):
-    def __init__(self, bbox):
+    """BoundingBox class
+    """
+    def __init__(self, bbox, dtype=np.int):
         self.bbox = np.asarray(bbox)
+        if dtype:
+            self.bbox = self.bbox.astype(np.int)
+
         self.coordinates, self.size = _split_bbox(bbox)
         self.ndim = len(self.bbox) // 2
 
