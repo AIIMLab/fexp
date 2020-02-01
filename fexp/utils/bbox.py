@@ -55,8 +55,13 @@ class BoundingBox(object):
         if self.ndim == len(x.ndim):
             raise ValueError('ValueError: BoundingBoxes could not added together with dimensions {self.ndim} {x.ndim}.')
 
+        # The encapsulating box starts at the minimal coordinates
         new_coordinates = np.stack([self.coordinates, self.coordinates_2]).min(axis=0)
-        new_size = np.stack([self.size, self.size_2]).max(axis=0)
+
+        # The size is the maximum of all sizes
+        new_size = np.abs(self.coordinates_2 - self.coordinates) + np.stack([self.size, self.size_2]).max(axis=0)
+        new_size = np.stack([self.coordinates, self.coordinates_2, new_size]).max(axis=0)
+
         return BoundingBox(_combine_bbox(new_coordinates, new_size))
 
     def __len__(self, x):
