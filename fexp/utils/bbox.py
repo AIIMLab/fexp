@@ -23,7 +23,6 @@ class BoundingBox(object):
             self.bbox = self.bbox.astype(dtype)
 
         self.coordinates, self.size = _split_bbox(bbox)
-
         self.ndim = len(self.bbox) // 2
 
     @property
@@ -48,21 +47,36 @@ class BoundingBox(object):
         return BoundingBox(self.bbox, dtype=dtype)
 
     def __add__(self, x):
-        """Adding two bounding boxes returns the encapsulating bounding box.
+        """Add operation:
+
+        - Adding two bounding boxes returns the encapsulating BoundingBox.
+        - Adding a vector shifts the center of the BoundingBox.
         """
-        self.coordinates_2, self.size_2 = x.coordinates, x.size
+        if isinstance(x, BoundingBox):
+            self.coordinates_2, self.size_2 = x.coordinates, x.size
 
-        if self.ndim == len(x.ndim):
-            raise ValueError('ValueError: BoundingBoxes could not added together with dimensions {self.ndim} {x.ndim}.')
+            if self.ndim == len(x.ndim):
+                raise ValueError(f'ValueError: '
+                                 f'BoundingBoxes could not added together with dimensions {self.ndim} {x.ndim}.')
 
-        # The encapsulating box starts at the minimal coordinates
-        new_coordinates = np.stack([self.coordinates, self.coordinates_2]).min(axis=0)
+            # The encapsulating box starts at the minimal coordinates
+            new_coordinates = np.stack([self.coordinates, self.coordinates_2]).min(axis=0)
 
-        # The size is the maximum of all sizes
-        new_size = np.abs(self.coordinates_2 - self.coordinates) + np.stack([self.size, self.size_2]).max(axis=0)
-        new_size = np.stack([self.coordinates, self.coordinates_2, new_size]).max(axis=0)
+            # The size is the maximum of all sizes
+            new_size = np.abs(self.coordinates_2 - self.coordinates) + np.stack([self.size, self.size_2]).max(axis=0)
+            new_size = np.stack([self.coordinates, self.coordinates_2, new_size]).max(axis=0)
 
-        return BoundingBox(_combine_bbox(new_coordinates, new_size))
+            return BoundingBox(_combine_bbox(new_coordinates, new_size))
+
+        else:
+            x = np.asarray(x) + np.zeros_like(self.coordinates)  # Broadcast x to same shape
+
+            if len(x) is not self.ndim:
+                raise ValueError(f'ValueError: Can only add a vector of same dimension as BoundingBox Got {len(x)}.')
+            new_center = self.center + np.asarray(x)
+            new_coordinates = new_center - self.size / 2
+
+            return BoundingBox(_combine_bbox(new_coordinates, self.size), dtype=self.dtype)
 
     def __len__(self, x):
         return len(self.bbox)
@@ -73,7 +87,7 @@ class BoundingBox(object):
     def __iter__(self):
         return iter(self.bbox)
 
-    def __str__(self):
+    def __repr__(self):
         return f'BoundingBox({self.bbox}))'
 
 
