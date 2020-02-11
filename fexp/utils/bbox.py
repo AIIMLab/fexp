@@ -188,7 +188,7 @@ def crop_to_bbox(image, bbox, pad_value=0):
                   in zip(bbox_coords + l_offset,
                          bbox_coords + bbox_size - r_offset)]
 
-    out = image[tuple(region_idx)]
+    out = image[tuple(region_idx)].copy()  # It can happen that this is a view, copying prevents this.
 
     if np.all(l_offset == 0) and np.all(r_offset == 0):
         return out
