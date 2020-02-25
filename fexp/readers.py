@@ -8,7 +8,7 @@ import pathlib
 import SimpleITK as sitk
 import numpy as np
 
-_DICOM_MODALITY_TAG = '0008|0060'
+DICOM_MODALITY_TAG = '0008|0060'
 _DICOM_VOI_LUT_FUNCTION = '0028|1056'
 _DICOM_WINDOW_CENTER_TAG = '0028|1050'
 _DICOM_WINDOW_WIDTH_TAG = '0028|1051'
@@ -136,7 +136,7 @@ def read_mammogram(filename, dtype=np.int):
     -------
     np.ndarray, dict
     """
-    extra_tags = [_DICOM_MODALITY_TAG, _DICOM_VOI_LUT_FUNCTION,
+    extra_tags = [DICOM_MODALITY_TAG, _DICOM_VOI_LUT_FUNCTION,
                   _DICOM_LATERALITY, _DICOM_IMAGE_LATERALITY,
                   _DICOM_WINDOW_CENTER_TAG, _DICOM_WINDOW_CENTER_TAG,
                   _DICOM_FIELD_OF_VIEW_HORIZONTAL_FLIP, _DICOM_PATIENT_ORIENTATION,
@@ -145,7 +145,7 @@ def read_mammogram(filename, dtype=np.int):
     image, metadata = read_image(filename, dicom_keys=extra_tags, dtype=dtype)
     dicom_tags = metadata['dicom_tags']
 
-    modality = dicom_tags[_DICOM_MODALITY_TAG]
+    modality = dicom_tags[DICOM_MODALITY_TAG]
     if not modality == 'MG':
         raise ValueError(f'{filename} is not a mammogram. Wrong Modality in DICOM header.')
     if not metadata['depth'] == 1:
