@@ -8,3 +8,9 @@ LICENSE file in the root directory of this source tree.
 __author__ = """Jonas Teuwen"""
 __email__ = 'j.teuwen@nki.nl'
 __version__ = '0.0.1'
+
+from fexp import image
+from fexp import plotting
+from fexp import readers
+from fexp import transforms
+from fexp import utils

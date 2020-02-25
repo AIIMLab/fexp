@@ -13,6 +13,9 @@ Welcome to fexp's documentation!
    authors
    history
 
+.. automodule:: fexp
+    :members:
+
 Indices and tables
 ==================
 * :ref:`genindex`
