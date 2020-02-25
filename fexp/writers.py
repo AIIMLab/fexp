@@ -64,6 +64,8 @@ def write_image(data, filepath, compression=True, metadata=None, resample=False)
                 raise RuntimeError(e)
 
     elif filepath.is_dir():
+        # Based on:
+        # https://itk.org/SimpleITKDoxygen/html/DicomSeriesReadModifyWrite_2DicomSeriesReadModifySeriesWrite_8py-example.html
         if not data.ndim == 3:
             raise ValueError(f'For dicom series, only 3D data is supported. Got {data.ndim}.')
 
