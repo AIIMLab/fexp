@@ -73,7 +73,7 @@ class GaussianAdditiveNoise(object):
     --------
     The following transform could be used to add Gaussian additive noise with 20 HU to the image, and subsequently clip
     to [-300, 100]HU and rescale this to [0, 1].
-    
+
     >>> transform = Compose([GaussianAdditiveNoise(0, 20), ClipAndScale([-300, 100], [-300, 100], [0, 1])])
     """
     def __init__(self, mean, stddev):
