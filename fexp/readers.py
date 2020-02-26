@@ -220,6 +220,7 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None,
     interpolator : str
       Either `nearest`, `linear` or None.
     fill_value : int
+
     Returns
     -------
     SimpleITK image.
