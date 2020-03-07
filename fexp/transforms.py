@@ -19,6 +19,9 @@ class Identity(object):
     def __call__(self, sample):
         return sample
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}()'
+
 
 class RandomTransform(object):
     """Select a transform randomly from a list"""
@@ -46,6 +49,14 @@ class RandomTransform(object):
         transform = self.transforms[idx]
         sample = transform(sample)  # pylint: disable=not-callable
         return sample
+
+    def __repr__(self):
+        repr_string = self.__class__.__name__ + '('
+        for transform in self.transforms:
+            repr_string += '\n'
+            repr_string += f'    {transform}'
+        repr_string += '\n)'
+        return repr_string
 
 
 class Compose(object):
@@ -105,6 +116,12 @@ class ClipAndScale(object):
         sample['image'] = self.apply_transform(sample['image'])
         return sample
 
+    def __repr__(self):
+        repr_string = f'{self.__class__.__name__}(clip_range={self.clip_range}, ' \
+                      f'source_interval={self.source_interval}, ' \
+                      f'target_interval={self.target_interval})'
+        return repr_string
+
 
 class GaussianAdditiveNoise(object):
     """Add Gaussian noise to the input image.
@@ -134,3 +151,6 @@ class GaussianAdditiveNoise(object):
     def __call__(self, sample):
         sample['image'] = self.apply_transform(sample['image'])
         return sample
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(mean={self.mean}, stddev={self.stddev})'
