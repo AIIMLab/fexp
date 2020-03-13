@@ -78,7 +78,7 @@ class BoundingBox(object):
 
             return BoundingBox(_combine_bbox(new_coordinates, self.size), dtype=self.dtype)
 
-    def __len__(self, x):
+    def __len__(self):
         return len(self.bbox)
 
     def __getitem__(self, idx):
