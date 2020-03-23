@@ -12,7 +12,7 @@ from typing import Union
 
 class Image:
     """
-    Rudimentary object to allow for storing image properties and ability to write to file
+    Rudimentary object to allow for storing image properties and ability to write to file.
 
     Do not trust on this! API can change.
     """
