@@ -138,7 +138,7 @@ def read_mammogram(filename, dtype=np.int):
     """
     extra_tags = [DICOM_MODALITY_TAG, _DICOM_VOI_LUT_FUNCTION,
                   _DICOM_LATERALITY, _DICOM_IMAGE_LATERALITY,
-                  _DICOM_WINDOW_CENTER_TAG, _DICOM_WINDOW_CENTER_TAG,
+                  _DICOM_WINDOW_WIDTH_TAG, _DICOM_WINDOW_CENTER_TAG,
                   _DICOM_FIELD_OF_VIEW_HORIZONTAL_FLIP, _DICOM_PATIENT_ORIENTATION,
                   _DICOM_PHOTOMETRIC_INTERPRETATION]
 
