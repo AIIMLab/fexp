@@ -72,7 +72,7 @@ def write_image(data, filepath, compression=True, metadata=None, resample=False)
 
     if any([_ in filepath.suffix for _ in possible_exts]):
         try:
-            sitk.WriteImage(sitk_image, filepath, True if filepath.suffix == 'nii.gz' else compression)
+            sitk.WriteImage(sitk_image, str(filepath), True if filepath.suffix == 'nii.gz' else compression)
         except RuntimeError as e:
             error_str = str(e)
             if error_str.startswith('Exception thrown in SimpleITK WriteImage'):
