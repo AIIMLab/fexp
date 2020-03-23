@@ -19,7 +19,7 @@ class Image:
     def __init__(self, data, header=None, *args, **kwargs):
         self.data = data
         self.header = header
-        self.spacing = None if 'spacing' not in header else 'spacing'
+        self.spacing = header.get('spacing', None)
 
     @staticmethod
     def shape(self):

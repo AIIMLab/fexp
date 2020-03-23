@@ -124,7 +124,7 @@ def read_image(filename, dtype=None, no_metadata=False, **kwargs):
 
 class MammogramImage(fexp.image.Image):
     def __init__(self, data, header, view=None, laterality=None):
-        super().__init__(self, data, header)
+        super().__init__(data, header)
 
         self.view = view
         self.laterality = laterality
@@ -215,7 +215,7 @@ def read_mammogram(filename, dtype=np.int, new_behavior=False):
     if not new_behavior:
         return image, metadata
     else:
-        return MammogramImage(image, metadata, view=modality[_DICOM_VIEW_POSITION], laterality=laterality)
+        return MammogramImage(image, metadata, view=dicom_tags[_DICOM_VIEW_POSITION], laterality=laterality)
 
 
 def resample_sitk_image(sitk_image, spacing=None, interpolator=None,
