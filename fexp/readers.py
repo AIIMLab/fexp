@@ -7,6 +7,8 @@ LICENSE file in the root directory of this source tree.
 import pathlib
 import SimpleITK as sitk
 import numpy as np
+import fexp
+
 
 DICOM_MODALITY_TAG = '0008|0060'
 _DICOM_VOI_LUT_FUNCTION = '0028|1056'
@@ -17,6 +19,7 @@ _DICOM_FIELD_OF_VIEW_HORIZONTAL_FLIP = '0018|7034'
 _DICOM_PATIENT_ORIENTATION = '0020|0020'
 _DICOM_LATERALITY = '0020|0060'
 _DICOM_IMAGE_LATERALITY = '0020|0062'
+_DICOM_VIEW_POSITION = '0018|5101'
 _DICOM_PHOTOMETRIC_INTERPRETATION = '0028|0004'
 _SITK_INTERPOLATOR_DICT = {
     'nearest': sitk.sitkNearestNeighbor,
@@ -37,7 +40,7 @@ def read_image_as_sitk_image(filename):
 
     Parameters
     ----------
-    filename : Path or str
+    filename : pathlib.Path or str
 
     Returns
     -------
@@ -119,7 +122,15 @@ def read_image(filename, dtype=None, no_metadata=False, **kwargs):
     return image, metadata
 
 
-def read_mammogram(filename, dtype=np.int):
+class MammogramImage(fexp.image.Image):
+    def __init__(self, data, header, view=None, laterality=None):
+        super().__init__(self, data, header)
+
+        self.view = view
+        self.laterality = laterality
+
+
+def read_mammogram(filename, dtype=np.int, new_behavior=False):
     """
     Read mammograms in dicom format. Dicom tags which:
     - flip images horizontally,
@@ -131,16 +142,18 @@ def read_mammogram(filename, dtype=np.int):
     ----------
     filename : pathlib.Path or str
     dtype : dtype
+    new_behavior : bool
+        Output will be of the form image, dict otherwise a MammogramImage object will be returned.
 
     Returns
     -------
-    np.ndarray, dict
+    np.ndarray, dict if new_behavior is False else MammogramImage
     """
     extra_tags = [DICOM_MODALITY_TAG, _DICOM_VOI_LUT_FUNCTION,
                   _DICOM_LATERALITY, _DICOM_IMAGE_LATERALITY,
-                  _DICOM_WINDOW_CENTER_TAG, _DICOM_WINDOW_CENTER_TAG,
-                  _DICOM_FIELD_OF_VIEW_HORIZONTAL_FLIP, _DICOM_PATIENT_ORIENTATION,
-                  _DICOM_PHOTOMETRIC_INTERPRETATION]
+                  _DICOM_VIEW_POSITION, _DICOM_WINDOW_CENTER_TAG,
+                  _DICOM_WINDOW_CENTER_TAG, _DICOM_FIELD_OF_VIEW_HORIZONTAL_FLIP,
+                  _DICOM_PATIENT_ORIENTATION, _DICOM_PHOTOMETRIC_INTERPRETATION]
 
     image, metadata = read_image(filename, dicom_keys=extra_tags, dtype=dtype)
     dicom_tags = metadata['dicom_tags']
@@ -199,7 +212,10 @@ def read_mammogram(filename, dtype=np.int):
 
     metadata['spacing'] = metadata['spacing'][:-1]
 
-    return image, metadata
+    if not new_behavior:
+        return image, metadata
+    else:
+        return MammogramImage(image, metadata, view=modality[_DICOM_VIEW_POSITION], laterality=laterality)
 
 
 def resample_sitk_image(sitk_image, spacing=None, interpolator=None,
@@ -225,8 +241,8 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None,
     -------
     SimpleITK image.
     """
-    if isinstance(sitk_image, str):
-        sitk_image = sitk.ReadImage(sitk_image)
+    if isinstance(sitk_image, (str, pathlib.Path)):
+        sitk_image = read_image_as_sitk_image(sitk_image)
     num_dim = sitk_image.GetDimension()
     if not interpolator:
         interpolator = 'linear'

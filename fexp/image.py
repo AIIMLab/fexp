@@ -5,8 +5,28 @@ Copyright (c) Nikita Moriakov and Jonas Teuwen
 This source code is licensed under the MIT license found in the
 LICENSE file in the root directory of this source tree.
 """
+import fexp
 import numpy as np
 from typing import Union
+
+
+class Image:
+    """
+    Rudimentary object to allow for storing image properties and ability to write to file
+
+    Do not trust on this! API can change.
+    """
+    def __init__(self, data, header=None, *args, **kwargs):
+        self.data = data
+        self.header = header
+        self.spacing = None if 'spacing' not in header else 'spacing'
+
+    @staticmethod
+    def shape(self):
+        return self.data.shape
+
+    def to_filename(self, filename, compression=True):
+        fexp.save(self, filename, compression=compression)
 
 
 def clip_and_scale(

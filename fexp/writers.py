@@ -9,9 +9,27 @@ import os
 import SimpleITK as sitk
 import time
 import pathlib
+import fexp
 from glob import glob
 from fexp.readers import resample_sitk_image
 from fexp.readers import DICOM_MODALITY_TAG
+
+
+def save(image, filepath, compression=True):
+    """
+    Saves a fexp.image.Image object to file.
+
+    Parameters
+    ----------
+    image : fexp.image.Image
+    filepath : pathlib.Path or str
+
+    Returns
+    -------
+
+    None
+    """
+    write_image(image.data, filepath, compression, image.header)
 
 
 def write_image(data, filepath, compression=True, metadata=None, resample=False):
