@@ -51,6 +51,8 @@ def write_image(data, filepath, compression=True, metadata=None, resample=False)
             sitk_image.SetOrigin(metadata['origin'])
         if 'direction' in metadata:
             sitk_image.SetDirection(metadata['direction'])
+        if 'series_description' in metadata:
+            sitk_image.SetMetaData('0008|103e', metadata['series_description'])
 
     if any([str(filepath).endswith(ext) for ext in possible_exts]):
         try:
