@@ -52,9 +52,9 @@ def write_image(data, filepath, compression=True, metadata=None, resample=False)
         if 'direction' in metadata:
             sitk_image.SetDirection(metadata['direction'])
 
-    if any([_ in filepath.suffix for _ in possible_exts]):
+    if any([str(filepath).endswith(ext) for ext in possible_exts]):
         try:
-            sitk.WriteImage(sitk_image, str(filepath), True if filepath.suffix == 'nii.gz' else compression)
+            sitk.WriteImage(sitk_image, str(filepath), True if str(filepath).endswith('.nii.gz') else compression)
         except RuntimeError as e:
             error_str = str(e)
             if error_str.startswith('Exception thrown in SimpleITK WriteImage'):
