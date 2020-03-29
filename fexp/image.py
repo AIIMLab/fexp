@@ -7,27 +7,8 @@ LICENSE file in the root directory of this source tree.
 """
 import fexp
 import numpy as np
+
 from typing import Union
-
-
-class Image:
-    """
-    Rudimentary object to allow for storing image properties and ability to write to file.
-
-    Do not trust on this! API can change.
-    """
-    def __init__(self, data, header=None, *args, **kwargs):
-        self.data = data
-        self.header = header
-        self.spacing = header.get('spacing', None)
-
-    @staticmethod
-    def shape(self):
-        return self.data.shape
-
-    def to_filename(self, filename, compression=True):
-        fexp.save(self, filename, compression=compression)
-
 
 def clip_and_scale(
         arr: np.ndarray,
