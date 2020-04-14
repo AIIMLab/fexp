@@ -45,7 +45,7 @@ def read_image_as_sitk_image(filename):
     return sitk_image
 
 
-def read_image(filename, dtype=None, no_metadata=False, force_2d=False):
+def read_image(filename, dtype=None, no_metadata=False, force_2d=False, **kwargs):
     """Read medical image
 
     Parameters
