@@ -45,7 +45,7 @@ def read_image_as_sitk_image(filename):
     return sitk_image
 
 
-def read_image(filename, dtype=None, no_metadata=False, **kwargs):
+def read_image(filename, dtype=None, no_metadata=False, force_2d=False):
     """Read medical image
 
     Parameters
@@ -56,6 +56,8 @@ def read_image(filename, dtype=None, no_metadata=False, **kwargs):
         The requested dtype the output should be cast.
     no_metadata : bool
         Do not output metadata
+    force_2d : bool
+        If this is set to true, first slice in first axis will be taken, if the size[0] == 1.
 
     Returns
     -------
@@ -100,6 +102,11 @@ def read_image(filename, dtype=None, no_metadata=False, **kwargs):
         'origin': sitk_image.GetOrigin(),
         'direction': sitk_image.GetDirection()
     })
+
+    if force_2d:
+        if not image.shape[0] == 1:
+            raise ValueError(f'Forcing to 2D while the first dimension is not 1.')
+        image = image[0]
 
     if dtype:
         image = image.astype(dtype)

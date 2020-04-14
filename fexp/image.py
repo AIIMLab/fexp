@@ -5,10 +5,9 @@ Copyright (c) Nikita Moriakov and Jonas Teuwen
 This source code is licensed under the MIT license found in the
 LICENSE file in the root directory of this source tree.
 """
-import fexp
 import numpy as np
-
 from typing import Union
+
 
 def clip_and_scale(
         arr: np.ndarray,
