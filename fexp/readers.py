@@ -8,16 +8,7 @@ import pathlib
 import SimpleITK as sitk
 import numpy as np
 
-DICOM_MODALITY_TAG = '0008|0060'
-_DICOM_VOI_LUT_FUNCTION = '0028|1056'
-_DICOM_WINDOW_CENTER_TAG = '0028|1050'
-_DICOM_WINDOW_WIDTH_TAG = '0028|1051'
-_DICOM_WINDOW_CENTER_WIDTH_EXPLANATION_TAG = '0028|1055'
-_DICOM_FIELD_OF_VIEW_HORIZONTAL_FLIP = '0018|7034'
-_DICOM_PATIENT_ORIENTATION = '0020|0020'
-_DICOM_LATERALITY = '0020|0060'
-_DICOM_IMAGE_LATERALITY = '0020|0062'
-_DICOM_PHOTOMETRIC_INTERPRETATION = '0028|0004'
+
 _SITK_INTERPOLATOR_DICT = {
     'nearest': sitk.sitkNearestNeighbor,
     'linear': sitk.sitkLinear,
@@ -37,7 +28,7 @@ def read_image_as_sitk_image(filename):
 
     Parameters
     ----------
-    filename : Path or str
+    filename : pathlib.Path or str
 
     Returns
     -------
@@ -54,7 +45,7 @@ def read_image_as_sitk_image(filename):
     return sitk_image
 
 
-def read_image(filename, dtype=None, no_metadata=False, **kwargs):
+def read_image(filename, dtype=None, no_metadata=False, force_2d=False, **kwargs):
     """Read medical image
 
     Parameters
@@ -65,6 +56,8 @@ def read_image(filename, dtype=None, no_metadata=False, **kwargs):
         The requested dtype the output should be cast.
     no_metadata : bool
         Do not output metadata
+    force_2d : bool
+        If this is set to true, first slice in first axis will be taken, if the size[0] == 1.
 
     Returns
     -------
@@ -110,94 +103,16 @@ def read_image(filename, dtype=None, no_metadata=False, **kwargs):
         'direction': sitk_image.GetDirection()
     })
 
+    if force_2d:
+        if not image.shape[0] == 1:
+            raise ValueError(f'Forcing to 2D while the first dimension is not 1.')
+        image = image[0]
+
     if dtype:
         image = image.astype(dtype)
 
     if no_metadata:
         return image
-
-    return image, metadata
-
-
-def read_mammogram(filename, dtype=np.int):
-    """
-    Read mammograms in dicom format. Dicom tags which:
-    - flip images horizontally,
-    - VOI Lut Function before displaying,
-
-    are read and set appropriately.
-
-    Parameters
-    ----------
-    filename : pathlib.Path or str
-    dtype : dtype
-
-    Returns
-    -------
-    np.ndarray, dict
-    """
-    extra_tags = [DICOM_MODALITY_TAG, _DICOM_VOI_LUT_FUNCTION,
-                  _DICOM_LATERALITY, _DICOM_IMAGE_LATERALITY,
-                  _DICOM_WINDOW_WIDTH_TAG, _DICOM_WINDOW_CENTER_TAG,
-                  _DICOM_FIELD_OF_VIEW_HORIZONTAL_FLIP, _DICOM_PATIENT_ORIENTATION,
-                  _DICOM_PHOTOMETRIC_INTERPRETATION]
-
-    image, metadata = read_image(filename, dicom_keys=extra_tags, dtype=dtype)
-    dicom_tags = metadata['dicom_tags']
-
-    modality = dicom_tags[DICOM_MODALITY_TAG]
-    if not modality == 'MG':
-        raise ValueError(f'{filename} is not a mammogram. Wrong Modality in DICOM header.')
-    if not metadata['depth'] == 1:
-        raise ValueError(f'First dimension of mammogram should be one.')
-
-    # Remove the depth dimension
-    image = image.reshape(list(image.shape)[1:])
-
-    # Sometimes a function, the VOILUTFunction, needs to be applied before displaying the mammogram.
-    voi_lut_function = dicom_tags[_DICOM_VOI_LUT_FUNCTION] if dicom_tags[_DICOM_VOI_LUT_FUNCTION] else 'LINEAR'
-    if voi_lut_function == 'LINEAR':
-        pass
-    elif voi_lut_function == 'SIGMOID':
-        # https://dicom.innolitics.com/ciods/nm-image/voi-lut/00281056
-        image_min = image.min()
-        image_max = image.max()
-        window_center = float(dicom_tags[_DICOM_WINDOW_CENTER_TAG])
-        window_width = float(dicom_tags[_DICOM_WINDOW_WIDTH_TAG])
-        image = (image_max - image_min) / (1 + np.exp(-4 * (image - window_center) / window_width)) + image_min
-        if dtype:
-            image = image.astype(dtype)
-    else:
-        raise NotImplementedError(f'VOI LUT Function {voi_lut_function} is not implemented.')
-
-    # Photometric Interpretation determines how to read the pixel values and if they should be inverted
-    photometric_interpretation = dicom_tags[_DICOM_PHOTOMETRIC_INTERPRETATION]
-    if photometric_interpretation == 'MONOCHROME2':
-        pass
-    else:
-        raise NotImplementedError(f'Photometric Interpretation {photometric_interpretation} is not implemented.')
-
-    laterality = dicom_tags[_DICOM_LATERALITY] or dicom_tags[_DICOM_IMAGE_LATERALITY]
-    metadata['laterality'] = laterality
-
-    # Sometimes a horizontal flip is required:
-    # https://groups.google.com/forum/#!msg/comp.protocols.dicom/X4ddGYiQOzs/g04EDChOQBwJ
-    needs_horizontal_flip = dicom_tags[_DICOM_FIELD_OF_VIEW_HORIZONTAL_FLIP] == 'YES'
-    if laterality:
-        # Check patient position
-        orientation = dicom_tags[_DICOM_PATIENT_ORIENTATION].split('\\')[0]
-        if (laterality == 'L' and orientation == 'P') or (laterality == 'R' and orientation == 'A'):
-            needs_horizontal_flip = True
-
-    if needs_horizontal_flip:
-        image = np.ascontiguousarray(np.fliplr(image))
-
-    del metadata['dicom_tags']
-    del metadata['depth']
-    del metadata['direction']
-    del metadata['origin']
-
-    metadata['spacing'] = metadata['spacing'][:-1]
 
     return image, metadata
 
@@ -225,8 +140,8 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None,
     -------
     SimpleITK image.
     """
-    if isinstance(sitk_image, str):
-        sitk_image = sitk.ReadImage(sitk_image)
+    if isinstance(sitk_image, (str, pathlib.Path)):
+        sitk_image = read_image_as_sitk_image(sitk_image)
     num_dim = sitk_image.GetDimension()
     if not interpolator:
         interpolator = 'linear'

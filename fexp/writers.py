@@ -11,7 +11,8 @@ import time
 import pathlib
 from glob import glob
 from fexp.readers import resample_sitk_image
-from fexp.readers import DICOM_MODALITY_TAG
+
+DICOM_MODALITY_TAG = '0008|0060'
 
 
 def write_image(data, filepath, compression=True, metadata=None, resample=False):
