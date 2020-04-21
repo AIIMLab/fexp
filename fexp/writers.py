@@ -63,6 +63,8 @@ def write_image(data, filepath, compression=True, metadata=None, resample=False)
             if error_str.startswith('Exception thrown in SimpleITK WriteImage'):
                 if f'Write: Error writing {filepath}' in error_str:
                     raise RuntimeError(f'Cannot write to {filepath}.')
+                else:
+                    raise RuntimeError(e)  # Parse the error better.
             else:
                 raise RuntimeError(e)
 
