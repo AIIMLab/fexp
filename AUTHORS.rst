@@ -6,9 +6,9 @@ Development Lead
 ----------------
 
 * Jonas Teuwen <j.teuwen@nki.nl>
-* Nikita Moriakov <nm@dxdy.ru>
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Nikita Moriakov <nm@dxdy.ru>
+* Ray Sheombarsing <r.sheombarsing@nki.nl>
