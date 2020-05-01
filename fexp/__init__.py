@@ -12,5 +12,5 @@ __version__ = '0.0.1'
 from fexp import image
 from fexp import plotting
 from fexp import readers
-from fexp import transforms
+from fexp.transform import generic
 from fexp import utils

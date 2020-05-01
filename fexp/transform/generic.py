@@ -1,5 +1,6 @@
+# coding=utf-8
 """
-Copyright (c) Nikita Moriakov and Jonas Teuwen
+Copyright (c) Fexp Contributors
 
 This source code is licensed under the MIT license found in the
 LICENSE file in the root directory of this source tree.
@@ -121,36 +122,3 @@ class ClipAndScale(object):
                       f'source_interval={self.source_interval}, ' \
                       f'target_interval={self.target_interval})'
         return repr_string
-
-
-class GaussianAdditiveNoise(object):
-    """Add Gaussian noise to the input image.
-
-    Examples
-    --------
-    The following transform could be used to add Gaussian additive noise with 20 HU to the image, and subsequently clip
-    to [-300, 100]HU and rescale this to [0, 1].
-
-    >>> transform = Compose([GaussianAdditiveNoise(0, 20), ClipAndScale([-300, 100], [-300, 100], [0, 1])])
-    """
-    def __init__(self, mean, stddev):
-        """
-        Adds Gaussian additive noise to the input image.
-
-        Parameters
-        ----------
-        mean : float
-        stddev : float
-        """
-        self.mean = mean
-        self.stddev = stddev
-
-    def apply_transform(self, data):
-        return data + np.random.normal(loc=self.mean, scale=self.stddev, size=data.shape)
-
-    def __call__(self, sample):
-        sample['image'] = self.apply_transform(sample['image'])
-        return sample
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}(mean={self.mean}, stddev={self.stddev})'

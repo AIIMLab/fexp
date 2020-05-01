@@ -17,6 +17,14 @@
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #
+"""
+Copyright (c) Fexp Contributors
+
+This source code is licensed under the MIT license found in the
+LICENSE file in the root directory of this source tree.
+"""
+
+
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
