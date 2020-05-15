@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from scipy.stats import norm
 
-# Module for performing (separable higher dimensional) convolution
+# Module with tools for convolution
 
 
 def mult2ind(mult_ind, dim_size):
