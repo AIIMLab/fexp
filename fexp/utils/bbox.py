@@ -25,7 +25,7 @@ class BoundingBox(object):
         if dtype:
             self.bbox = self.bbox.astype(dtype)
 
-        self.coordinates, self.size = _split_bbox(bbox)
+        self.coordinates, self.size = _split_bbox(self.bbox)
         self.ndim = len(self.bbox) // 2
 
     @property
