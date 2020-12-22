@@ -11,10 +11,11 @@ from typing import Union
 
 
 def clip_and_scale(
-        arr: np.ndarray,
-        clip_range: Union[bool, tuple, list] = False,
-        source_interval: Union[bool, tuple, list] = False,
-        target_interval: Union[bool, tuple, list] = False):
+    arr: np.ndarray,
+    clip_range: Union[bool, tuple, list] = False,
+    source_interval: Union[bool, tuple, list] = False,
+    target_interval: Union[bool, tuple, list] = False,
+):
     """
     Clips image to specified range, and then linearly scales to the specified range (if given).
 
@@ -44,11 +45,11 @@ def clip_and_scale(
     arr = np.asarray(arr)
     if clip_range and tuple(clip_range) != (0, 0):
         if not len(clip_range) == 2:
-            raise ValueError('Clip range must be two a tuple of length 2.')
+            raise ValueError("Clip range must be two a tuple of length 2.")
         arr = np.clip(arr, clip_range[0], clip_range[1])
     if target_interval and tuple(target_interval) != (0, 0):
         if not len(target_interval) == 2:
-            raise ValueError('Scale range must be two a tuple of length 2.')
+            raise ValueError("Scale range must be two a tuple of length 2.")
         if source_interval:
             arr_min, arr_max = source_interval
         else:

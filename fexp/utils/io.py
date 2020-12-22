@@ -20,9 +20,9 @@ def write_list(filename, data):
     filename : str or pathlib.Path
     data : list
     """
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         for line in data:
-            f.write(str(line) + '\n')
+            f.write(str(line) + "\n")
 
 
 def read_list(filename):
@@ -38,9 +38,9 @@ def read_list(filename):
     list
     """
 
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         lines = f.readlines()
-    return [line.rstrip('\n') for line in lines if not line.startswith('#')]
+    return [line.rstrip("\n") for line in lines if not line.startswith("#")]
 
 
 def write_json(filename, data, indent=2):
@@ -55,7 +55,7 @@ def write_json(filename, data, indent=2):
     indent : int
         Indent to make file human readable.
     """
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         json.dump(data, f, indent=indent)
 
 
@@ -71,6 +71,6 @@ def read_json(filename):
     -------
     dict
     """
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         data = json.load(f)
     return data

@@ -9,15 +9,17 @@ import numpy as np
 
 
 class BoundingBox(object):
-    """BoundingBox class
-    """
+    """BoundingBox class"""
+
     def __init__(self, bbox, dtype=np.int):
         if isinstance(bbox, BoundingBox):
             self.bbox = bbox.bbox
         elif isinstance(bbox, (list, tuple, np.ndarray)):
             self.bbox = np.asarray(bbox)
         else:
-            raise ValueError(f'BoundingBox only accepts BoundingBox, list, tuple or np.ndarrays as input.')
+            raise ValueError(
+                f"BoundingBox only accepts BoundingBox, list, tuple or np.ndarrays as input."
+            )
 
         self.dtype = dtype
         if dtype:
@@ -32,7 +34,9 @@ class BoundingBox(object):
 
     def bounding_box_around_center(self, output_size):
         output_size = np.asarray(output_size)
-        return BoundingBox(np.rint(_combine_bbox(self.center - output_size / 2, output_size)))
+        return BoundingBox(
+            np.rint(_combine_bbox(self.center - output_size / 2, output_size))
+        )
 
     def squeeze(self, axis=0):
         """Add an extra axis to the bounding box."""
@@ -47,6 +51,54 @@ class BoundingBox(object):
     def astype(self, dtype):
         return BoundingBox(self.bbox, dtype=dtype)
 
+    def crop_to_shape(self, shape):
+        """
+        Crop BoundingBox to the given shape, e.g. to crop the box to the image shape.
+
+        Parameters
+        ----------
+        shape : list
+
+        Returns
+        -------
+        BoundingBox
+        """
+        if len(shape) != self.ndim:
+            raise ValueError(
+                f"Shape has to have the same dimension as bounding box. Got {shape} and {self.ndim}."
+            )
+
+        # Crop to image shape
+        new_coordinates = np.clip(self.coordinates, 0, shape)
+        # Compute maximal size
+        offset = shape - (self.size + new_coordinates)
+        # Only keep negative values
+        offset = np.clip(offset, None, 0)
+        new_size = self.size + offset
+
+        return BoundingBox(_combine_bbox(new_coordinates, new_size))
+
+    def expand(self, shape):
+        """
+        Expand bounding box with given shape in all directions.
+
+        Parameters
+        ----------
+        shape : list
+
+        Returns
+        -------
+        BoundingBox
+        """
+        if len(shape) != self.ndim:
+            raise ValueError(
+                f"Shape has to have the same dimension as bounding box. Got {shape} and {self.ndim}."
+            )
+        shape = np.asarray(shape)
+        new_coordinates = self.coordinates - shape
+        new_size = self.size + 2 * shape
+        return BoundingBox(_combine_bbox(new_coordinates, new_size))
+
     def __add__(self, x):
         """Add operation:
 
@@ -57,27 +109,41 @@ class BoundingBox(object):
             self.coordinates_2, self.size_2 = x.coordinates, x.size
 
             if self.ndim == len(x.ndim):
-                raise ValueError(f'ValueError: '
-                                 f'BoundingBoxes could not added together with dimensions {self.ndim} {x.ndim}.')
+                raise ValueError(
+                    f"ValueError: "
+                    f"BoundingBoxes could not added together with dimensions {self.ndim} {x.ndim}."
+                )
 
             # The encapsulating box starts at the minimal coordinates
-            new_coordinates = np.stack([self.coordinates, self.coordinates_2]).min(axis=0)
+            new_coordinates = np.stack([self.coordinates, self.coordinates_2]).min(
+                axis=0
+            )
 
             # The size is the maximum of all sizes
-            new_size = np.abs(self.coordinates_2 - self.coordinates) + np.stack([self.size, self.size_2]).max(axis=0)
-            new_size = np.stack([self.coordinates, self.coordinates_2, new_size]).max(axis=0)
+            new_size = np.abs(self.coordinates_2 - self.coordinates) + np.stack(
+                [self.size, self.size_2]
+            ).max(axis=0)
+            new_size = np.stack([self.coordinates, self.coordinates_2, new_size]).max(
+                axis=0
+            )
 
             return BoundingBox(_combine_bbox(new_coordinates, new_size))
 
         else:
-            x = np.asarray(x) + np.zeros_like(self.coordinates)  # Broadcast x to same shape
+            x = np.asarray(x) + np.zeros_like(
+                self.coordinates
+            )  # Broadcast x to same shape
 
             if len(x) is not self.ndim:
-                raise ValueError(f'ValueError: Can only add a vector of same dimension as BoundingBox Got {len(x)}.')
+                raise ValueError(
+                    f"ValueError: Can only add a vector of same dimension as BoundingBox Got {len(x)}."
+                )
             new_center = self.center + np.asarray(x)
             new_coordinates = new_center - self.size / 2
 
-            return BoundingBox(_combine_bbox(new_coordinates, self.size), dtype=self.dtype)
+            return BoundingBox(
+                _combine_bbox(new_coordinates, self.size), dtype=self.dtype
+            )
 
     def __len__(self):
         return len(self.bbox)
@@ -89,7 +155,7 @@ class BoundingBox(object):
         return iter(self.bbox)
 
     def __repr__(self):
-        return f'BoundingBox({self.bbox}))'
+        return f"BoundingBox({self.bbox}))"
 
 
 def _split_bbox(bbox):
@@ -105,7 +171,9 @@ def _split_bbox(bbox):
     """
     len_bbox = len(bbox)
     if not len_bbox % 2 == 0:
-        raise ValueError(f'{bbox} needs to have a have a length which is divisible by 2.')
+        raise ValueError(
+            f"{bbox} needs to have a have a length which is divisible by 2."
+        )
     ndim = len_bbox // 2
     bbox_coords = bbox[:ndim]
     bbox_size = bbox[ndim:]
@@ -185,19 +253,21 @@ def crop_to_bbox(image, bbox, pad_value=0):
     r_offset = (bbox_coords + bbox_size) - np.array(image.shape)
     r_offset[r_offset < 0] = 0
 
-    region_idx = [slice(i, j) for i, j
-                  in zip(bbox_coords + l_offset,
-                         bbox_coords + bbox_size - r_offset)]
+    region_idx = [
+        slice(i, j)
+        for i, j in zip(bbox_coords + l_offset, bbox_coords + bbox_size - r_offset)
+    ]
 
-    out = image[tuple(region_idx)].copy()  # It can happen that this is a view, copying prevents this.
+    out = image[
+        tuple(region_idx)
+    ].copy()  # It can happen that this is a view, copying prevents this.
 
     if np.all(l_offset == 0) and np.all(r_offset == 0):
         return out
 
     # If we have a positive offset, we need to pad the patch.
     patch = pad_value * np.ones(bbox_size, dtype=image.dtype)
-    patch_idx = [slice(i, j) for i, j
-                 in zip(l_offset, bbox_size - r_offset)]
+    patch_idx = [slice(i, j) for i, j in zip(l_offset, bbox_size - r_offset)]
 
     patch[tuple(patch_idx)] = out
 

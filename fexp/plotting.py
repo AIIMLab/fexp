@@ -7,7 +7,8 @@ LICENSE file in the root directory of this source tree.
 """
 
 import matplotlib
-matplotlib.use('agg')
+
+matplotlib.use("agg")
 
 import matplotlib.pyplot as plt
 import skimage.measure
@@ -18,9 +19,20 @@ import io
 import PIL
 
 
-def plot_2d(image, mask=None, bboxes=None, points=None,
-            overlay=None, linewidth=2, mask_color='r', bbox_color='b', points_color='g',
-            overlay_cmap='jet', overlay_threshold=0.1, overlay_alpha=0.1):
+def plot_2d(
+    image,
+    mask=None,
+    bboxes=None,
+    points=None,
+    overlay=None,
+    linewidth=2,
+    mask_color="r",
+    bbox_color="b",
+    points_color="g",
+    overlay_cmap="jet",
+    overlay_threshold=0.1,
+    overlay_alpha=0.1,
+):
 
     """
     Plot image with contours and point annotations. Contours are automatically extracted from masks.
@@ -79,10 +91,10 @@ def plot_2d(image, mask=None, bboxes=None, points=None,
             image = image[0, ...]
 
     if image.ndim == 2:
-        cmap = 'gray'
+        cmap = "gray"
 
-    ax.imshow(image, cmap=cmap, aspect='equal', extent=(0, width, height, 0))
-    ax.set_adjustable('datalim')
+    ax.imshow(image, cmap=cmap, aspect="equal", extent=(0, width, height, 0))
+    ax.set_adjustable("datalim")
 
     if mask is not None:
         add_2d_contours(mask, ax, linewidth, mask_color)
@@ -92,10 +104,16 @@ def plot_2d(image, mask=None, bboxes=None, points=None,
             add_2d_bbox(bbox, ax, linewidth, bbox_color)
 
     if overlay is not None:
-        add_2d_overlay(overlay, ax, threshold=overlay_threshold, cmap=overlay_cmap, alpha=overlay_alpha)
+        add_2d_overlay(
+            overlay,
+            ax,
+            threshold=overlay_threshold,
+            cmap=overlay_cmap,
+            alpha=overlay_alpha,
+        )
 
     if points is not None:
-        ax.plot(points[:, 1], points[:, 0], points_color + '.', markersize=2, alpha=1)
+        ax.plot(points[:, 1], points[:, 0], points_color + ".", markersize=2, alpha=1)
 
     fig.gca().set_axis_off()
     fig.gca().xaxis.set_major_locator(NullLocator())
@@ -112,7 +130,7 @@ def plot_2d(image, mask=None, bboxes=None, points=None,
     return pil_image
 
 
-def add_2d_bbox(bbox, ax, linewidth=0.5, color='b'):
+def add_2d_bbox(bbox, ax, linewidth=0.5, color="b"):
     """Add bounding box to the image.
 
     Parameters
@@ -126,12 +144,18 @@ def add_2d_bbox(bbox, ax, linewidth=0.5, color='b'):
         matplotlib supported color string for contour overlay.
 
     """
-    rect = mpatches.Rectangle(bbox[:2][::-1], bbox[3], bbox[2],
-                              fill=False, edgecolor=color, linewidth=linewidth)
+    rect = mpatches.Rectangle(
+        bbox[:2][::-1],
+        bbox[3],
+        bbox[2],
+        fill=False,
+        edgecolor=color,
+        linewidth=linewidth,
+    )
     ax.add_patch(rect)
 
 
-def add_2d_contours(mask, axes, linewidth=0.5, color='r'):
+def add_2d_contours(mask, axes, linewidth=0.5, color="r"):
     """Plot the contours around the `1`'s in the mask
 
     Parameters
@@ -151,7 +175,7 @@ def add_2d_contours(mask, axes, linewidth=0.5, color='r'):
         axes.plot(*contour[:, [1, 0]].T, color=color, linewidth=linewidth)
 
 
-def add_2d_overlay(overlay, ax, threshold=0.1, cmap='jet', alpha=0.1):
+def add_2d_overlay(overlay, ax, threshold=0.1, cmap="jet", alpha=0.1):
     """Adds an overlay of the probability map and predicted regions
 
     overlay : ndarray

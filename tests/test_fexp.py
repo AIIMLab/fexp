@@ -10,6 +10,7 @@ import fexp
 
 """Tests for `fexp` package."""
 
+
 @pytest.fixture
 def response():
     """Sample pytest fixture.

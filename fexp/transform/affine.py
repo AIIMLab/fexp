@@ -26,7 +26,9 @@ def compute_grid(discretization_size):
     float-valued Pytorch-tensor of size [n_y n_x 2]
         grid associated to prescribed discretization sizes
     """
-    mesh = torch.meshgrid((torch.arange(discretization_size[0]), torch.arange(discretization_size[1])))
+    mesh = torch.meshgrid(
+        (torch.arange(discretization_size[0]), torch.arange(discretization_size[1]))
+    )
     return torch.stack(mesh, 2).flip([2]).float()
 
 
@@ -51,10 +53,14 @@ def rescale(points, domain, target):
     """
     target = target.float()
     domain = domain.float()
-    return (target[:, 1] - target[:, 0]) / (domain[:, 1] - domain[:, 0]) * (points - domain[:, 0]) + target[:, 0]
+    return (target[:, 1] - target[:, 0]) / (domain[:, 1] - domain[:, 0]) * (
+        points - domain[:, 0]
+    ) + target[:, 0]
 
 
-def affine(image, lin_transform, shift=torch.zeros(2, 1), origin=None, mode='bilinear', grid=()):
+def affine(
+    image, lin_transform, shift=torch.zeros(2, 1), origin=None, mode="bilinear", grid=()
+):
     """
     Apply affine transformation to image
 
@@ -82,7 +88,7 @@ def affine(image, lin_transform, shift=torch.zeros(2, 1), origin=None, mode='bil
     # Initialization
     dim_spat = 2
     image_shape = image.size()
-    discret_size = image_shape[len(image_shape) - dim_spat::]
+    discret_size = image_shape[len(image_shape) - dim_spat : :]
 
     # Geometric quantities
     shift = shift.view(1, 1, dim_spat)
@@ -95,15 +101,24 @@ def affine(image, lin_transform, shift=torch.zeros(2, 1), origin=None, mode='bil
         transformed_grid = grid - shift
     else:
         if not origin:
-            origin = torch.tensor([(discret_size[1] - 1) / 2, (discret_size[0] - 1) / 2]).view(1, 1, dim_spat)
-        transformed_grid = torch.matmul(lin_transform, (grid - (shift + origin)).view(*discret_size, dim_spat, 1))
+            origin = torch.tensor(
+                [(discret_size[1] - 1) / 2, (discret_size[0] - 1) / 2]
+            ).view(1, 1, dim_spat)
+        transformed_grid = torch.matmul(
+            lin_transform, (grid - (shift + origin)).view(*discret_size, dim_spat, 1)
+        )
         transformed_grid = transformed_grid.view(*discret_size, dim_spat) + origin
 
     # Take "flipped" dimension in y-direction into account, rescale to [-1, 1] and interpolate
     transformed_grid[:, :, 1] = discret_size[0] - 1 - transformed_grid[:, :, 1]
-    transformed_grid = rescale(transformed_grid, torch.tensor([[0, discret_size[1] - 1], [0, discret_size[0] - 1]]),
-                               torch.tensor([[-1, 1], [-1, 1]]))
-    transformed_image = nnf.grid_sample(image.view(1, *image_shape), transformed_grid.unsqueeze(0), mode=mode)
+    transformed_grid = rescale(
+        transformed_grid,
+        torch.tensor([[0, discret_size[1] - 1], [0, discret_size[0] - 1]]),
+        torch.tensor([[-1, 1], [-1, 1]]),
+    )
+    transformed_image = nnf.grid_sample(
+        image.view(1, *image_shape), transformed_grid.unsqueeze(0), mode=mode
+    )
 
     # Flip image back to usual "upside-down" convention
     return transformed_image[0, :, torch.arange(discret_size[0] - 1, -1, -1), :]
