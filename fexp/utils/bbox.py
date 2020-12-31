@@ -1,38 +1,30 @@
 # coding=utf-8
-"""
-Copyright (c) Fexp Contributors
-
-This source code is licensed under the MIT license found in the
-LICENSE file in the root directory of this source tree.
-"""
 import numpy as np
 
+from typing import Optional, Union, List, Tuple
 
-class BoundingBox(object):
+
+class BoundingBox:
     """BoundingBox class"""
 
-    def __init__(self, bbox, dtype=np.int):
-        if isinstance(bbox, BoundingBox):
-            self.bbox = bbox.bbox
-        elif isinstance(bbox, (list, tuple, np.ndarray)):
-            self.bbox = np.asarray(bbox)
-        else:
-            raise ValueError(
-                f"BoundingBox only accepts BoundingBox, list, tuple or np.ndarrays as input."
-            )
-
-        self.dtype = dtype
+    def __init__(self, data: Union[List, Tuple, np.ndarray], dtype: Optional[Union[np.dtype, str]]=None):
+        data = np.asarray(data)
         if dtype:
-            self.bbox = self.bbox.astype(dtype)
+            data = data.astype(dtype)
 
-        self.coordinates, self.size = _split_bbox(bbox)
-        self.ndim = len(self.bbox) // 2
+        self.coordinates, self.size = _split_bbox(data)
+        self.data = data
+        self.ndim = len(self.data) // 2
 
     @property
     def center(self):
         return self.coordinates + self.size / 2
 
-    def bounding_box_around_center(self, output_size):
+    @property
+    def dtype(self):
+        return self.data.dtype
+
+    def around_center(self, output_size):
         output_size = np.asarray(output_size)
         return BoundingBox(
             np.rint(_combine_bbox(self.center - output_size / 2, output_size))
@@ -40,7 +32,7 @@ class BoundingBox(object):
 
     def squeeze(self, axis=0):
         """Add an extra axis to the bounding box."""
-        bbox = self.bbox[:]
+        bbox = self.data[:]
         coordinates, size = _split_bbox(bbox)
         coordinates = np.insert(coordinates, 0, 0, axis=axis)
         size = np.insert(size, 0, 1, axis=axis)
@@ -49,7 +41,7 @@ class BoundingBox(object):
         return BoundingBox(bbox)
 
     def astype(self, dtype):
-        return BoundingBox(self.bbox, dtype=dtype)
+        return BoundingBox(self.data, dtype=dtype)
 
     def crop_to_shape(self, shape):
         """
@@ -99,67 +91,96 @@ class BoundingBox(object):
         new_size = self.size + 2 * shape
         return BoundingBox(_combine_bbox(new_coordinates, new_size))
 
-    def __add__(self, x):
+    def relative_to(self, bbox):
+        """
+        Create the BoundingBox which is relative to the coordinate system of array.
+
+        Parameters
+        ----------
+        bbox : BoundingBox
+
+        Returns
+        -------
+
+        BoundingBox
+        """
+        coordinates_2, _ = bbox.coordinates, bbox.size
+        new_coordinates = self.coordinates - coordinates_2
+        return BoundingBox(_combine_bbox(new_coordinates, self.size))
+
+    def __add__(self, bbox):
         """Add operation:
 
         - Adding two bounding boxes returns the encapsulating BoundingBox.
-        - Adding a vector shifts the center of the BoundingBox.
         """
-        if isinstance(x, BoundingBox):
-            self.coordinates_2, self.size_2 = x.coordinates, x.size
+        # TODO: Asserts
+        # assert_bbox(bbox)
 
-            if self.ndim == len(x.ndim):
-                raise ValueError(
-                    f"ValueError: "
-                    f"BoundingBoxes could not added together with dimensions {self.ndim} {x.ndim}."
-                )
+        coordinates_2, size_2 = bbox.coordinates, bbox.size
 
-            # The encapsulating box starts at the minimal coordinates
-            new_coordinates = np.stack([self.coordinates, self.coordinates_2]).min(
-                axis=0
+        if self.ndim != bbox.ndim:
+            raise ValueError(
+                f"BoundingBoxes could not added together with dimensions {self.ndim} {bbox.ndim}."
             )
 
-            # The size is the maximum of all sizes
-            new_size = np.abs(self.coordinates_2 - self.coordinates) + np.stack(
-                [self.size, self.size_2]
-            ).max(axis=0)
-            new_size = np.stack([self.coordinates, self.coordinates_2, new_size]).max(
-                axis=0
+        # The encapsulating box starts at the minimal coordinates
+        new_coordinates = np.stack([self.coordinates, coordinates_2]).min(
+            axis=0
+        )
+
+        # The size is the maximum of all sizes
+        new_size = np.abs(coordinates_2 - self.coordinates) + np.stack(
+            [self.size, size_2]
+        ).max(axis=0)
+        new_size = np.stack([self.coordinates, coordinates_2, new_size]).max(
+            axis=0
+        )
+
+        return BoundingBox(_combine_bbox(new_coordinates, new_size))
+
+    def shift(self, x):
+        """
+        Shift the bounding box by a given vector.
+
+        Parameters
+        ----------
+        vector : List or np.ndarray
+
+        Returns
+        -------
+
+        BoundingBox
+        """
+        if len(x) not in [self.ndim, 1]:
+            raise ValueError(
+                f"Can only add a vector of dimension 1 or same dimension as BoundingBox Got {len(x)}."
             )
 
-            return BoundingBox(_combine_bbox(new_coordinates, new_size))
+        x = np.asarray(x) + np.zeros_like(
+            self.coordinates
+        )  # Broadcast x to same shape
 
-        else:
-            x = np.asarray(x) + np.zeros_like(
-                self.coordinates
-            )  # Broadcast x to same shape
+        new_coordinates = self.coordinates + np.asarray(x)
 
-            if len(x) is not self.ndim:
-                raise ValueError(
-                    f"ValueError: Can only add a vector of same dimension as BoundingBox Got {len(x)}."
-                )
-            new_center = self.center + np.asarray(x)
-            new_coordinates = new_center - self.size / 2
-
-            return BoundingBox(
-                _combine_bbox(new_coordinates, self.size), dtype=self.dtype
-            )
+        return BoundingBox(
+            _combine_bbox(new_coordinates, self.size)
+        )
 
     def __len__(self):
-        return len(self.bbox)
+        return len(self.data)
 
     def __getitem__(self, idx):
-        return self.bbox[idx]
+        return self.data[idx]
 
     def __iter__(self):
-        return iter(self.bbox)
+        return iter(self.data.tolist())
 
     def __repr__(self):
-        return f"BoundingBox({self.bbox}))"
+        return f"BoundingBox({self.data}, ndim={self.ndim}, dtype={self.dtype}))"
 
 
 def _split_bbox(bbox):
-    """Split bbox into coordinates and size
+    """Split array into coordinates and size
 
     Parameters
     ----------
@@ -224,14 +245,15 @@ def bounding_box(mask):
 
 
 def crop_to_bbox(image, bbox, pad_value=0):
-    """Extract bbox from images, coordinates can be negative.
+    # TODO: Check for integer dtype
+    """Extract array from images, coordinates can be negative.
 
     Parameters
     ----------
     image : ndarray
        nD array
     bbox : list or tuple or BoundingBox
-       bbox of the form (coordinates, size),
+       array of the form (coordinates, size),
        for instance (4, 4, 2, 1) is a patch starting at row 4, col 4 with height 2 and width 1.
     pad_value : number
        if bounding box would be out of the image, this is value the patch will be padded with.
@@ -272,3 +294,8 @@ def crop_to_bbox(image, bbox, pad_value=0):
     patch[tuple(patch_idx)] = out
 
     return patch
+
+
+def assert_bbox(x: object):
+    if not isinstance(x, BoundingBox):
+        raise ValueError(f"Expected BoundingBox. Got {type(x)}.")
