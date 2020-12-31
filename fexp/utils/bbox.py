@@ -35,6 +35,7 @@ class BoundingBox:
         )
 
     def squeeze(self, axis=0):
+        # TODO: Doesn't work for axis > 0
         """Add an extra axis to the bounding box."""
         bbox = self.data[:]
         coordinates, size = _split_bbox(bbox)
