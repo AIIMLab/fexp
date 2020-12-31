@@ -17,8 +17,18 @@ class RandomGaussianVectorfield(object):
     """
     Construct random vectorfield by sampling vector components from Gaussian distribution
     """
-    def __init__(self, grid_field, grid_target, mean_field, sigma_field, kernel=(), sigma_mollifier=(),
-                 interp_mode="bilinear", conv_method="toeplitz"):
+
+    def __init__(
+        self,
+        grid_field,
+        grid_target,
+        mean_field,
+        sigma_field,
+        kernel=(),
+        sigma_mollifier=(),
+        interp_mode="bilinear",
+        conv_method="toeplitz",
+    ):
         """
         Parameters
         ----------
@@ -49,10 +59,14 @@ class RandomGaussianVectorfield(object):
 
         if len(kernel) == 0:
             if sigma_mollifier:
-                self.kernel = [convolve.gaussian_kernel(sigma) for sigma in sigma_mollifier]
+                self.kernel = [
+                    convolve.gaussian_kernel(sigma) for sigma in sigma_mollifier
+                ]
                 self.sigma_mollifier = sigma_mollifier
             else:
-                raise ValueError("Mollification parameters should be specified if no kernel is provided")
+                raise ValueError(
+                    "Mollification parameters should be specified if no kernel is provided"
+                )
         else:
             self.kernel = kernel
 
@@ -71,12 +85,17 @@ class RandomGaussianVectorfield(object):
 
         # Construct random vector field and mollify
         # Note: spatial components following standard geometrical ordering
-        vectorfield = self.mean_field + self.sigma_field * torch.randn(self.dim_spat, *self.grid_field)
+        vectorfield = self.mean_field + self.sigma_field * torch.randn(
+            self.dim_spat, *self.grid_field
+        )
         vectorfield.unsqueeze_(0)
         for comp in range(self.dim_spat):
-            vectorfield[:, comp] = convolve.conv2d_separable(vectorfield[:, comp], self.kernel, mode="trunc",
-                                                             method=self.conv_method)
+            vectorfield[:, comp] = convolve.conv2d_separable(
+                vectorfield[:, comp], self.kernel, mode="trunc", method=self.conv_method
+            )
 
         # Interpolate vectorfield on grid on which image is sampled
-        vectorfield = nnf.interpolate(vectorfield, size=self.grid_target, mode=self.interp_mode)
+        vectorfield = nnf.interpolate(
+            vectorfield, size=self.grid_target, mode=self.interp_mode
+        )
         return vectorfield.view(self.dim_spat, *self.grid_target).permute([1, 2, 0])

@@ -105,11 +105,11 @@ def dft_shift(coeffs, mode="forward"):
     n = coeffs.size()[1]
     mid_idx = (n - 1) // 2
     if mode == "forward" or (mode == "inverse" and n % 2 == 0):
-        return torch.cat((coeffs[:, mid_idx + 1:], coeffs[:, :mid_idx + 1]), 1)
+        return torch.cat((coeffs[:, mid_idx + 1 :], coeffs[:, : mid_idx + 1]), 1)
     elif mode == "inverse":
         return torch.cat((coeffs[:, mid_idx:], coeffs[:, :mid_idx]), 1)
     else:
-        raise NotImplementedError('Choose either forward or inverse mapping')
+        raise NotImplementedError("Choose either forward or inverse mapping")
 
 
 def pad(coeffs, num_coeffs):
@@ -160,8 +160,15 @@ def toeplitz_matrix(a, num_shifts):
     len_a = a.shape[1]
 
     # Construct linear indices associated to positions shifted row
-    rows = torch.arange(num_shifts).view(num_shifts, 1).repeat(1, len_a).view(num_shifts * len_a)
-    cols = torch.arange(len_a).view(1, len_a).repeat(num_shifts, 1) + torch.arange(num_shifts).view(num_shifts, 1)
+    rows = (
+        torch.arange(num_shifts)
+        .view(num_shifts, 1)
+        .repeat(1, len_a)
+        .view(num_shifts * len_a)
+    )
+    cols = torch.arange(len_a).view(1, len_a).repeat(num_shifts, 1) + torch.arange(
+        num_shifts
+    ).view(num_shifts, 1)
     cols = cols.view(num_shifts * len_a)
     mult_ind = torch.stack((rows, cols), 0)
     lin_ind = mult2ind(mult_ind, [num_shifts, num_shifts + len_a - 1])
@@ -172,7 +179,7 @@ def toeplitz_matrix(a, num_shifts):
     toeplitz = toeplitz.view([num_shifts, num_shifts + len_a - 1])
 
     # Extract relevant columnns
-    return toeplitz[:, order_a - 1: order_a + num_shifts - 1]
+    return toeplitz[:, order_a - 1 : order_a + num_shifts - 1]
 
 
 def conv1d(a, b, mode="trunc", method="toeplitz"):
@@ -206,21 +213,30 @@ def conv1d(a, b, mode="trunc", method="toeplitz"):
     len_b = b.size()[1]
     order_a = two_sided_order(a)
     order_b = two_sided_order(b)
-    order_ab = 2**int(torch.ceil(torch.log(torch.tensor(2.0 * (order_a + order_b) - 1)) / torch.log(torch.tensor(2.0))))
+    order_ab = 2 ** int(
+        torch.ceil(
+            torch.log(torch.tensor(2.0 * (order_a + order_b) - 1))
+            / torch.log(torch.tensor(2.0))
+        )
+    )
 
     if method == "fft":
         # Pad with zeros, convert to one-sided representation and compute convolution
-        a_hat = torch.rfft(dft_shift(pad(a, order_ab), 'forward'), 1, onesided=False)
-        b_hat = torch.rfft(dft_shift(pad(b, order_ab), 'forward'), 1, onesided=False)
-        a_conv_b = dft_shift(torch.irfft(complex_mult(a_hat, b_hat), 1, onesided=False), 'inverse')
+        a_hat = torch.rfft(dft_shift(pad(a, order_ab), "forward"), 1, onesided=False)
+        b_hat = torch.rfft(dft_shift(pad(b, order_ab), "forward"), 1, onesided=False)
+        a_conv_b = dft_shift(
+            torch.irfft(complex_mult(a_hat, b_hat), 1, onesided=False), "inverse"
+        )
 
         # Determine nonzero coefficients
         if mode == "full":
             min_index = order_ab // 2 - order_a - order_b
             max_index = order_ab // 2 + order_a + order_b - 2
-            if (len_a % 2 == 0 and len_b % 2 == 1) or (len_a % 2 == 1 and len_b % 2 == 0):
+            if (len_a % 2 == 0 and len_b % 2 == 1) or (
+                len_a % 2 == 1 and len_b % 2 == 0
+            ):
                 max_index -= 1
-            elif (len_a % 2 == 1 and len_b % 2 == 1):
+            elif len_a % 2 == 1 and len_b % 2 == 1:
                 max_index -= 2
         elif mode == "trunc":
             order = max(order_a, order_b)
@@ -230,14 +246,19 @@ def conv1d(a, b, mode="trunc", method="toeplitz"):
             else:
                 max_index = order_ab // 2 + order - 3
 
-        return a_conv_b[:, min_index: max_index + 1]
+        return a_conv_b[:, min_index : max_index + 1]
 
     elif method == "toeplitz":
-        return torch.matmul(toeplitz_matrix(b, len_a), a.permute([1, 0])).permute([1, 0])
+        return torch.matmul(toeplitz_matrix(b, len_a), a.permute([1, 0])).permute(
+            [1, 0]
+        )
 
     elif method == "torch":
-        return torch.nn.functional.conv1d(a.view(dim_a[0], 1, dim_a[1]), b.flip([1]).view(1, 1, b.size()[1]),
-                                          padding=(len_b - 1) // 2).view(dim_a[0], dim_a[1])
+        return torch.nn.functional.conv1d(
+            a.view(dim_a[0], 1, dim_a[1]),
+            b.flip([1]).view(1, 1, b.size()[1]),
+            padding=(len_b - 1) // 2,
+        ).view(dim_a[0], dim_a[1])
 
 
 def conv2d_separable(a, w, mode="trunc", method="toeplitz"):
@@ -267,10 +288,19 @@ def conv2d_separable(a, w, mode="trunc", method="toeplitz"):
 
     # Perform 1d convolution in each spatial direction
     y = conv1d(a.view(batch_size * num_rows, num_cols), w[1], mode=mode, method=method)
-    y = conv1d(y.permute(switch_axes).reshape(batch_size * num_cols, num_rows), w[0], mode=mode, method=method)
+    y = conv1d(
+        y.permute(switch_axes).reshape(batch_size * num_cols, num_rows),
+        w[0],
+        mode=mode,
+        method=method,
+    )
 
     # Reshape back to batched format
-    return y.reshape(num_cols, batch_size * num_rows).permute(switch_axes).view(batch_size, num_rows, num_cols)
+    return (
+        y.reshape(num_cols, batch_size * num_rows)
+        .permute(switch_axes)
+        .view(batch_size, num_rows, num_cols)
+    )
 
 
 def gaussian_kernel(sigma, threshold=1e-03):
@@ -297,8 +327,12 @@ def gaussian_kernel(sigma, threshold=1e-03):
     # Evaluate Gaussian
     kernel = torch.zeros(2 * support_radius + 1)
     kernel[support_radius] = 1 / (np.sqrt(2 * np.pi) * sigma)
-    kernel[support_radius + 1:] = kernel[support_radius] * torch.exp(-0.5 * (support_right_intval / sigma)**2)
-    kernel[0:support_radius] = kernel[torch.arange(2 * support_radius, support_radius, -1)]
+    kernel[support_radius + 1 :] = kernel[support_radius] * torch.exp(
+        -0.5 * (support_right_intval / sigma) ** 2
+    )
+    kernel[0:support_radius] = kernel[
+        torch.arange(2 * support_radius, support_radius, -1)
+    ]
 
     # Discretized normalization: ensure kernel integrates to one
     return kernel.view(1, 2 * support_radius + 1) / torch.sum(kernel)

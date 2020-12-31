@@ -15,6 +15,7 @@ class Identity(object):
     """Identity transform (i.e. leave the input unchanged). Can be convenient when random sampling between different
     augmentations.
     """
+
     def __init__(self):
         pass
 
@@ -22,11 +23,12 @@ class Identity(object):
         return sample
 
     def __repr__(self):
-        return f'{self.__class__.__name__}()'
+        return f"{self.__class__.__name__}()"
 
 
 class RandomTransform(object):
     """Select a transform randomly from a list"""
+
     def __init__(self, transforms, choose_weight=None):
         """
         Given a weight, a transform is chosen from a list.
@@ -53,11 +55,11 @@ class RandomTransform(object):
         return sample
 
     def __repr__(self):
-        repr_string = self.__class__.__name__ + '('
+        repr_string = self.__class__.__name__ + "("
         for transform in self.transforms:
-            repr_string += '\n'
-            repr_string += f'    {transform}'
-        repr_string += '\n)'
+            repr_string += "\n"
+            repr_string += f"    {transform}"
+        repr_string += "\n)"
         return repr_string
 
 
@@ -67,6 +69,7 @@ class Compose(object):
     Code based on torchvision: https://github.com/pytorch/vision, but got forked from there as torchvision has some
     additional dependencies.
     """
+
     def __init__(self, transforms):
         self.transforms = transforms
 
@@ -76,9 +79,9 @@ class Compose(object):
         return sample
 
     def __repr__(self):
-        repr_string = self.__class__.__name__ + '('
+        repr_string = self.__class__.__name__ + "("
         for transform in self.transforms:
-            repr_string += '\n'
-            repr_string += f'    {transform}'
-        repr_string += '\n)'
+            repr_string += "\n"
+            repr_string += f"    {transform}"
+        repr_string += "\n)"
         return repr_string

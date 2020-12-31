@@ -7,7 +7,11 @@ from typing import Optional, Union, List, Tuple
 class BoundingBox:
     """BoundingBox class"""
 
-    def __init__(self, data: Union[List, Tuple, np.ndarray], dtype: Optional[Union[np.dtype, str]]=None):
+    def __init__(
+        self,
+        data: Union[List, Tuple, np.ndarray],
+        dtype: Optional[Union[np.dtype, str]] = None,
+    ):
         data = np.asarray(data)
         if dtype:
             data = data.astype(dtype)
@@ -124,17 +128,13 @@ class BoundingBox:
             )
 
         # The encapsulating box starts at the minimal coordinates
-        new_coordinates = np.stack([self.coordinates, coordinates_2]).min(
-            axis=0
-        )
+        new_coordinates = np.stack([self.coordinates, coordinates_2]).min(axis=0)
 
         # The size is the maximum of all sizes
         new_size = np.abs(coordinates_2 - self.coordinates) + np.stack(
             [self.size, size_2]
         ).max(axis=0)
-        new_size = np.stack([self.coordinates, coordinates_2, new_size]).max(
-            axis=0
-        )
+        new_size = np.stack([self.coordinates, coordinates_2, new_size]).max(axis=0)
 
         return BoundingBox(_combine_bbox(new_coordinates, new_size))
 
@@ -156,15 +156,11 @@ class BoundingBox:
                 f"Can only add a vector of dimension 1 or same dimension as BoundingBox Got {len(x)}."
             )
 
-        x = np.asarray(x) + np.zeros_like(
-            self.coordinates
-        )  # Broadcast x to same shape
+        x = np.asarray(x) + np.zeros_like(self.coordinates)  # Broadcast x to same shape
 
         new_coordinates = self.coordinates + np.asarray(x)
 
-        return BoundingBox(
-            _combine_bbox(new_coordinates, self.size)
-        )
+        return BoundingBox(_combine_bbox(new_coordinates, self.size))
 
     def __len__(self):
         return len(self.data)

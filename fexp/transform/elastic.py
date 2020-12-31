@@ -9,7 +9,9 @@ import torch
 import torch.nn.functional as nnf
 
 
-def elastic_deformation(image, vectorfield, int_time, int_method="euler", mode="bilinear", grid=()):
+def elastic_deformation(
+    image, vectorfield, int_time, int_method="euler", mode="bilinear", grid=()
+):
     """
     Apply elastic deformation to image by following the flow for small time of a given vectorfield.
     Todo: code contains unnecessary lines specific to the 2d case; this can be easily generalized to
@@ -37,7 +39,7 @@ def elastic_deformation(image, vectorfield, int_time, int_method="euler", mode="
     # Initialization: dimensions
     dim_spat = 2
     image_shape = image.size()
-    discret_size = image_shape[len(image_shape) - dim_spat::]
+    discret_size = image_shape[len(image_shape) - dim_spat : :]
 
     if len(grid) == 0:
         grid = compute_grid(discret_size)
@@ -49,8 +51,13 @@ def elastic_deformation(image, vectorfield, int_time, int_method="euler", mode="
         raise NotImplementedError("Runga Kutta is not yet implemented")
 
     # Rescale grid for interpolation
-    deformed_grid = rescale(deformed_grid, torch.tensor([[0, discret_size[1] - 1], [0, discret_size[0] - 1]]),
-                            torch.tensor([[-1, 1], [-1, 1]]))
+    deformed_grid = rescale(
+        deformed_grid,
+        torch.tensor([[0, discret_size[1] - 1], [0, discret_size[0] - 1]]),
+        torch.tensor([[-1, 1], [-1, 1]]),
+    )
 
     # Interpolate image
-    return nnf.grid_sample(image.unsqueeze(0), deformed_grid.unsqueeze_(0), mode=mode).view(*image_shape)
+    return nnf.grid_sample(
+        image.unsqueeze(0), deformed_grid.unsqueeze_(0), mode=mode
+    ).view(*image_shape)
