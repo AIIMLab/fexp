@@ -28,6 +28,9 @@ class BoundingBox:
     def dtype(self):
         return self.data.dtype
 
+    def astype(self, dtype):
+        return BoundingBox(self.data, dtype=dtype)
+
     def around_center(self, output_size):
         output_size = np.asarray(output_size)
         return BoundingBox(
@@ -44,9 +47,6 @@ class BoundingBox:
         bbox = _combine_bbox(coordinates, size)
 
         return BoundingBox(bbox)
-
-    def astype(self, dtype):
-        return BoundingBox(self.data, dtype=dtype)
 
     def crop_to_shape(self, shape):
         """
@@ -112,6 +112,28 @@ class BoundingBox:
         coordinates_2, _ = bbox.coordinates, bbox.size
         new_coordinates = self.coordinates - coordinates_2
         return BoundingBox(_combine_bbox(new_coordinates, self.size))
+
+    def to_mask(self, shape):
+        """
+        Convert bounding box to given shape. Box will be clipped prior to creating a mask.
+
+        Parameters
+        ----------
+        shape : tuple
+
+        Returns
+        -------
+        np.ndarray
+        """
+        new_box = self.crop_to_shape(shape)
+        region_idx = tuple(
+            slice(i, j)
+            for i, j in zip(new_box.coordinates, new_box.coordinates + new_box.size)
+        )
+
+        mask = np.zeros(shape, dtype=bool)
+        mask[region_idx] = True
+        return mask
 
     def __add__(self, bbox):
         """Add operation:
