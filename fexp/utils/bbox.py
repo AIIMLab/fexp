@@ -149,8 +149,7 @@ class BoundingBox:
         -------
         BoundingBox
         """
-        coordinates = self.coordinates.copy()
-        size = self.size.copy()
+        coordinates, size = self.__get_params()
 
         # Convert negative indices to new index
         axis_0 = self.ndim + axis_0 if axis_0 < 0 else axis_0
@@ -160,6 +159,30 @@ class BoundingBox:
         size[[axis_0, axis_1]] = size[[axis_1, axis_0]]
 
         return BoundingBox(_combine_bbox(coordinates, size))
+
+    def reorder_axes(self, *axes):
+        """
+        Reorder the axis. This function is intended to be used for instance in conjunction with the .transpose() on
+        the array related to the bounding box. This way the box can be reordered with the same indices as the array
+        is transposed.
+
+        Parameters
+        ----------
+        axes : int
+            The axes to reorder
+
+        Returns
+        -------
+        BoundingBox
+
+        """
+        if not len(set(axes)) == self.ndim:
+            raise ValueError("repeated axis in reorder_axis. Got {axes}")
+
+        coordinates, size = self.__get_params()
+        axes = np.array(axes)
+
+        return BoundingBox(_combine_bbox(coordinates[axes], size[axes]))
 
     def __add__(self, bbox):
         """Add operation:
@@ -210,6 +233,9 @@ class BoundingBox:
         new_coordinates = self.coordinates + np.asarray(x)
 
         return BoundingBox(_combine_bbox(new_coordinates, self.size))
+
+    def __get_params(self):
+        return self.coordinates.copy(), self.size.copy()
 
     def __len__(self):
         return len(self.data)
