@@ -109,6 +109,7 @@ class BoundingBox:
 
         BoundingBox
         """
+        # TODO: Can reuse .shift for this
         coordinates_2, _ = bbox.coordinates, bbox.size
         new_coordinates = self.coordinates - coordinates_2
         return BoundingBox(_combine_bbox(new_coordinates, self.size))
@@ -134,6 +135,23 @@ class BoundingBox:
         mask = np.zeros(shape, dtype=bool)
         mask[region_idx] = True
         return mask
+
+    def swapaxis(self, axis_0, axis_1):
+        """
+        Swap position of two axis in the BoundingBox
+
+        Parameters
+        ----------
+        axis_0 : int
+        axis_1 : int
+
+        Returns
+        -------
+        BoundingBox
+        """
+        coordinates = np.swapaxis(self.coordinates, axis_0, axis_1)
+        size = np.swapaxis(self.size, axis_0, axis_1)
+        BoundingBox(_combine_bbox(coordinates, size))
 
     def __add__(self, bbox):
         """Add operation:
