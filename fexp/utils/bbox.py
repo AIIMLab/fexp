@@ -149,9 +149,17 @@ class BoundingBox:
         -------
         BoundingBox
         """
-        coordinates = np.swapaxis(self.coordinates, axis_0, axis_1)
-        size = np.swapaxis(self.size, axis_0, axis_1)
-        BoundingBox(_combine_bbox(coordinates, size))
+        coordinates = self.coordinates.copy()
+        size = self.size.copy()
+
+        # Convert negative indices to new index
+        axis_0 = self.ndim + axis_0 if axis_0 < 0 else axis_0
+        axis_1 = self.ndim + axis_1 if axis_1 < 0 else axis_1
+
+        coordinates[[axis_0, axis_1]] = coordinates[[axis_1, axis_0]]
+        size[[axis_0, axis_1]] = size[[axis_1, axis_0]]
+
+        return BoundingBox(_combine_bbox(coordinates, size))
 
     def __add__(self, bbox):
         """Add operation:
