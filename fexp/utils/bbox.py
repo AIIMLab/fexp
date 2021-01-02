@@ -93,7 +93,7 @@ class BoundingBox:
             )
         shape = np.asarray(shape)
         new_coordinates = self.coordinates - shape
-        new_size = self.size + 2 * shape
+        new_size = self.size + shape
         return BoundingBox(_combine_bbox(new_coordinates, new_size))
 
     def relative_to(self, bbox):
